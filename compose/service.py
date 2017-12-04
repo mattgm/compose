@@ -178,6 +178,7 @@ class Service(object):
         self.secrets = secrets or []
         self.scale_num = scale or 1
         self.options = options
+        self.auto = auto
 
     def __repr__(self):
         return '<Service: {}>'.format(self.name)

@@ -115,6 +115,10 @@ class Project(object):
                 service_dict.pop('secrets', None) or [],
                 config_data.secrets)
 
+            auto = True
+            if 'auto' in service_dict:
+                auto = service_dict.pop('auto')
+
             project.services.append(
                 Service(
                     service_dict.pop('name'),
@@ -127,7 +131,7 @@ class Project(object):
                     volumes_from=volumes_from,
                     secrets=secrets,
                     pid_mode=pid_mode,
-                    auto=service.dict.pop('auto')
+                    auto=auto,
                     **service_dict)
             )
 

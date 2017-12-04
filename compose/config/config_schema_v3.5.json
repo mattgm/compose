@@ -93,6 +93,7 @@
             }
           ]
         },
+        "auto": {"type":"boolean"},
         "cap_add": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
         "cap_drop": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
         "cgroup_parent": {"type": "string"},
@@ -136,7 +137,6 @@
             {"type": "array", "items": {"type": "string"}}
           ]
         },
-        "auto": {"type":"boolean"},
         "env_file": {"$ref": "#/definitions/string_or_list"},
         "environment": {"$ref": "#/definitions/list_or_dict"},
 

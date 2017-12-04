@@ -92,6 +92,7 @@
             }
           ]
         },
+        "auto": {"type":"boolean"},
         "cap_add": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
         "cap_drop": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
         "cgroup_parent": {"type": "string"},
