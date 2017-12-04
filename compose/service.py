@@ -163,6 +163,7 @@ class Service(object):
         secrets=None,
         scale=None,
         pid_mode=None,
+        auto=True,
         **options
     ):
         self.name = name

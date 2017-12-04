@@ -98,6 +98,10 @@ def format_subnet_ip_address(instance):
 
     return True
 
+@FormatChecker.cls_checks("auto", raises=ValidationError)
+def format_auto(instance):
+    return True
+
 
 def match_named_volumes(service_dict, project_volumes):
     service_volumes = service_dict.get('volumes', [])
@@ -426,7 +430,7 @@ def process_config_schema_errors(error):
 
 def validate_against_config_schema(config_file):
     schema = load_jsonschema(config_file)
-    format_checker = FormatChecker(["ports", "expose", "subnet_ip_address"])
+    format_checker = FormatChecker(["ports", "expose", "subnet_ip_address","auto"])
     validator = Draft4Validator(
         schema,
         resolver=RefResolver(get_resolver_path(), schema),

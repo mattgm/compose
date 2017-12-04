@@ -127,6 +127,7 @@ class Project(object):
                     volumes_from=volumes_from,
                     secrets=secrets,
                     pid_mode=pid_mode,
+                    auto=service.dict.pop('auto')
                     **service_dict)
             )
 
@@ -460,7 +461,7 @@ class Project(object):
                 detached=detached,
                 scale_override=scale_override.get(service.name),
                 rescale=rescale,
-                start=start,
+                start=start and service.auto,
                 project_services=scaled_services
             )
 

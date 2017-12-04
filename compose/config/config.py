@@ -111,6 +111,7 @@ DOCKER_CONFIG_KEYS = [
     'volumes',
     'volumes_from',
     'working_dir',
+    'auto',
 ]
 
 ALLOWED_KEYS = DOCKER_CONFIG_KEYS + [

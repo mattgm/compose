@@ -35,6 +35,7 @@ SUPPORTED_KEYS = {
     'command',
     'environment',
     'entrypoint',
+    'auto',
 } | set(SERVICE_KEYS)
 
 VERSION = '0.1'

@@ -136,6 +136,7 @@
             {"type": "array", "items": {"type": "string"}}
           ]
         },
+        "auto": {"type":"boolean"},
         "env_file": {"$ref": "#/definitions/string_or_list"},
         "environment": {"$ref": "#/definitions/list_or_dict"},
 
