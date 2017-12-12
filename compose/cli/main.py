@@ -10,6 +10,9 @@ import pipes
 import re
 import subprocess
 import sys
+import os
+import time
+import _thread
 from distutils.spawn import find_executable
 from inspect import getdoc
 from operator import attrgetter
@@ -55,6 +58,9 @@ from .log_printer import LogPrinter
 from .utils import get_version_info
 from .utils import human_readable_file_size
 from .utils import yesno
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
+from flask import jsonify
 
 
 if not IS_WINDOWS_PLATFORM:
@@ -604,6 +610,8 @@ class TopLevelCommand(object):
 
         Options:
             -q    Only display IDs
+            -v    Verbose display
+            -j    Give output in json
         """
         containers = sorted(
             self.project.containers(service_names=options['SERVICE'], stopped=True) +
@@ -613,6 +621,30 @@ class TopLevelCommand(object):
         if options['-q']:
             for container in containers:
                 print(container.id)
+        elif options['-v']:
+            headers = [
+                'Name',
+                'Command',
+                'State',
+                'Ports',
+                'Node',
+                'Short ID',
+            ]
+
+            rows = []
+            for container in containers:
+                command = container.human_readable_command
+                if len(command) > 30:
+                    command = '%s ...' % command[:26]
+                rows.append([
+                    container.name,
+                    command,
+                    container.human_readable_state,
+                    container.human_readable_ports,
+                    self.project.client.info().get('Swarm', {}).get('name'),
+                    container.short_id,
+                ])
+            print(Formatter().table(headers, rows))
         else:
             headers = [
                 'Name',
@@ -625,12 +657,24 @@ class TopLevelCommand(object):
                 command = container.human_readable_command
                 if len(command) > 30:
                     command = '%s ...' % command[:26]
-                rows.append([
-                    container.name,
-                    command,
-                    container.human_readable_state,
-                    container.human_readable_ports,
-                ])
+                if options['-j']:
+                    row = [
+                        container.name,
+                        command,
+                        container.human_readable_state,
+                        container.human_readable_ports,
+                    ]
+                    data = [(head, element) for head in headers for element in row]
+                    json = jsonify({x:y for x,y in data})
+                    json.dumps()
+                else:
+                    rows.append([
+                        container.name,
+                        command,
+                        container.human_readable_state,
+                        container.human_readable_ports,
+                    ])
+
             print(Formatter().table(headers, rows))
 
     def pull(self, options):
@@ -916,6 +960,8 @@ class TopLevelCommand(object):
                                        Implies --abort-on-container-exit.
             --scale SERVICE=NUM        Scale SERVICE to NUM instances. Overrides the `scale`
                                        setting in the Compose file if present.
+            --watch                    Watches docker-compose.yml and Dockerfile for updates and 
+                                       automatically rebuilds upon changes
         """
         start_deps = not options['--no-deps']
         exit_value_from = exitval_from_opts(options, self.project)
@@ -925,6 +971,7 @@ class TopLevelCommand(object):
         remove_orphans = options['--remove-orphans']
         detached = options.get('-d')
         no_start = options.get('--no-start')
+        watch = options.get('--watch')
 
         if detached and (cascade_stop or exit_value_from):
             raise UserError("--abort-on-container-exit and -d cannot be combined.")
@@ -949,6 +996,13 @@ class TopLevelCommand(object):
 
             if detached or no_start:
                 return
+
+            if watch:
+                w = Watcher(self, options)
+                w.run()
+                self.up(options)
+                return
+
 
             attached_containers = filter_containers_to_service_names(to_attach, service_names)
 
@@ -1319,3 +1373,42 @@ def build_exec_command(options, container_id, command):
     args += [container_id]
     args += command
     return args
+
+class Watcher:
+    directory_to_watch = os.getcwd()
+
+    def __init__(self, command_class, options):
+        self.observer = Observer()
+        self.command_class = command_class
+        self.options = options
+
+    def run(self):
+        event_handler = Handler(self.command_class, self.options)
+        self.observer.schedule(event_handler, self.directory_to_watch, recursive=True)
+        self.observer.start()
+
+        try:
+            while True:
+                time.sleep(1)
+        except:
+            self.observer.stop()
+
+        self.observer.join()
+        return True
+
+class Handler(FileSystemEventHandler):
+
+    def __init__(self, command_class, options):
+        self.command_class = command_class
+        self.options = options
+
+    def on_any_event(self, event):
+        if event.event_type == 'modified':
+            self.command_class.project.down('all', False, False)
+            _thread.interrupt_main()
+            return
+
+            
+
+
+

@@ -169,6 +169,11 @@ class Container(object):
         log_type = self.log_driver
         return not log_type or log_type in ('json-file', 'journald')
 
+    @property
+    def ip_address(self):
+        return self.get('')
+
+
     def attach_log_stream(self):
         """A log stream can only be attached if the container uses a json-file
         log driver.

@@ -69,6 +69,7 @@ RUN useradd -d /home/user -m -s /bin/bash user
 WORKDIR /code/
 
 RUN pip install tox==2.1.1
+RUN pip install watchdog
 
 ADD requirements.txt /code/
 ADD requirements-dev.txt /code/
